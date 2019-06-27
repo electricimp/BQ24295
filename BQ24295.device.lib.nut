@@ -119,7 +119,7 @@ class BQ24295 {
         // VREG bits 2-7, Resolution 16mV, Offset 3.504V, Range 3.504V - 4.400V
         local chrgVLim = ((rv >> 2) * 16) + 3504;
         // Convert mV to Volts
-        return chrgV / 1000.0;
+        return chrgVLim / 1000.0;
     }
 
     // Returns a table with slots vbusStatus (charging mode) and inputCurrentLimit.
