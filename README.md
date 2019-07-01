@@ -1,14 +1,14 @@
 # BQ24295 #
 
-The library provides a driver for the BQ24295 switch-mode battery charge and system power path management devices for single-cell Li-Ion and Li-polymer batteries. The BQ24295 supports high input voltage fast charging and communicates over an I²C interface. 
+This library provides a driver for the [Texas Instruments BQ24295](http://www.ti.com/lit/ds/symlink/bq24295.pdf) switch-mode battery charge and system power management device for single-cell Li-Ion and Li-polymer batteries. The BQ24295 supports high input voltage fast charging and communicates over an I&sup2;C interface.
 
-**To include this library in your project, add** #require "BQ24295.device.lib.nut:1.0.0" **at the top of your device code.**
+**To include this library in your project, add** `#require "BQ24295.device.lib.nut:1.0.0"` **at the top of your device code.**
 
 ## Class Usage ##
 
-### Constructor: BQ24295(*i2cBus [,i2cAddress]*) ###
+### Constructor: BQ24295(*i2cBus[, i2cAddress]*) ###
 
-The constructor *does not configure the battery charger*. It is recommended that the [*enable()*](#enablesettings) method is called immediately after the constructor and on cold boots to configure the charger with settings for you battery.
+The constructor does not configure the battery charger. It is therefore strongly recommended that the [*enable()*](#enablesettings) method is called to configure the charger with settings for you battery immediately after calling the constructor and on cold boots.
 
 #### Parameters ####
 
@@ -20,6 +20,8 @@ The constructor *does not configure the battery charger*. It is recommended that
 #### Example ####
 
 ```squirrel
+#require "BQ24295.device.lib.nut:1.0.0"
+
 // Alias and configure an impC001 I2C bus
 local i2c = hardware.i2cKL;
 i2c.configure(CLOCK_SPEED_400_KHZ);
@@ -44,9 +46,9 @@ This method configures and enables the battery charger with settings to perform 
 
 | Key | Type | Description |
 | --- | --- | --- |
-| *voltage* | Float | The desired charge voltage in Volts. Range: 3.504V - 4.400V. Default: 4.208V. |
-| *current* | Integer | The desired fast charge current limit in mA. Range: 512mA - 3008mA. Default: 1024mA. |
-| *setChargeTerminationCurrentLimit* | Integer | Charge cycle is terminated when battery voltage is above recharge threshold and the current is below *termination current*. Range: 128mA - 2048mA. Default: 256mA |
+| *voltage* | Float | The desired charge voltage in Volts. Range: 3.504V - 4.400V. Default: 4.208V |
+| *current* | Integer | The desired fast-charge current limit in mA. Range: 512mA - 3008mA. Default: 1024mA |
+| *setChargeTerminationCurrentLimit* | Integer | The current at which the charge cycle will be terminated when the battery voltage is above the recharge threshold. Range: 128mA - 2048mA. Default: 256mA |
 
 #### Return Value ####
 
@@ -162,7 +164,7 @@ switch(status) {
         // Do something
         break;
     case BQ24295_CHARGING_STATUS.PRE_CHARGE:
-        server.log("Battery pre charging");
+        server.log("Battery pre-charging");
         // Do something
         break;
     case BQ24295_CHARGING_STATUS.FAST_CHARGING:
@@ -187,9 +189,9 @@ Table &mdash; A charger fault report with the following keys:
 | Key/Fault | Type | Description |
 | --- | --- | --- |
 | *watchdogFault* | Bool | `true` if watchdog timer has expired, otherwise `false` |
-| *boostFault* | Bool | `true` if V<sub>BUS</sub> overloaded in OTG, V<sub>BUS</sub> OVP, or battery is too low (any conditions that cannot start boost function), otherwise `false` |
+| *boostFault* | Bool | `true` if V<sub>BUS</sub> overloaded in OTG, V<sub>BUS</sub> is OVP, or the battery is in any state that prevents the boost function from being started; otherwise `false` |
 | *chrgFault* | Integer | A charging fault. See [**Charging Faults**](#charging-faults), below, for possible values |
-| *battFault* | Bool| `true` if battery OVP, otherwise `false` |
+| *battFault* | Bool| `true` if battery is OVP, otherwise `false` |
 | *ntcFault* | Integer | An NTC fault. See [**NTC Faults**](#ntc-faults), below, for possible values |
 
 #### Charging Faults ####

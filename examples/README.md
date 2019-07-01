@@ -6,7 +6,7 @@ In order to set up the BQ24295 battery charger properly there are two important 
 
 ## Finding Charging Parameters ##
 
-In this example we will be looking at this [3.7V 2000mAh](https://www.adafruit.com/product/2011?gclid=EAIaIQobChMIh7uL6pP83AIVS0sNCh1NNQUsEAQYAiABEgKFA_D_BwE) battery from Adafruit. This battery is labelled 3.7V but this is the nominal voltage and not the voltage required for charging. The label also shows its capacity to be 2000mAh but provides no specific charging current. This is not enough information to determine our charging parameters, so we must look for more information in the battery's [datasheet](LiIon2000mAh37V.pdf).
+In this example we will be looking at a [3.7V 2000mAh battery from Adafruit](https://www.adafruit.com/product/2011?gclid=EAIaIQobChMIh7uL6pP83AIVS0sNCh1NNQUsEAQYAiABEgKFA_D_BwE). This battery is labelled 3.7V but this is the nominal voltage and not the voltage required for charging. The label also shows its capacity to be 2000mAh but provides no specific charging current. This is not enough information to determine our charging parameters, so we must look for more information in the battery's [datasheet](LiIon2000mAh37V.pdf).
 
 In Section 3, Form 1 there is a table describing the battery's rated performance characteristics. Looking at the fourth row of the table, we can see the charging voltage is 4.2V. Row six shows the quick charge current is 1CA. The C represents the battery capacity. Row 1 shows that the capacity is 2000mAh. This means that the quick charge current = 1 * 2000mA = 2000mA.
 
