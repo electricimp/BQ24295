@@ -46,7 +46,7 @@ This method configures and enables the battery charger with settings to perform 
 | --- | --- | --- |
 | *voltage* | Float | The desired charge voltage in Volts. Range: 3.504V - 4.400V. Default: 4.208V. |
 | *current* | Integer | The desired fast charge current limit in mA. Range: 512mA - 3008mA. Default: 1024mA. |
-| *setChargeTerminationCurrentLimit* | Integer | Charge cycle is terminated when battery voltage is above recharge threshold and the current is below *termination current*. Range: 128mA - 2048mA. Default: 256mA |
+| *chrgTermLimit* | Integer | Charge cycle is terminated when battery voltage is above recharge threshold and the current is below *termination current*. Range: 128mA - 2048mA. Default: 256mA |
 
 #### Return Value ####
 
@@ -76,19 +76,19 @@ Nothing.
 batteryCharger.disable();
 ```
 
-### getChargeVoltage() ###
+### getChrgTermV() ###
 
-This method gets the connected battery's current charge voltage.
+This method gets the charge termination voltage for the battery.
 
 #### Return Value ####
 
-Float &mdash; The charge voltage in V.
+Float &mdash; The charge voltage limit in Volts.
 
 #### Example ####
 
 ```squirrel
-local voltage = batteryCharger.getChargeVoltage();
-server.log("Charge voltage: " + voltage + "V");
+local voltage = batteryCharger.getChrgTermV();
+server.log("Charge Termination Voltage: " + voltage + "V");
 ```
 
 ### getInputStatus() ###
@@ -101,8 +101,8 @@ Table &mdash; An input status report with the following keys:
 
 | Key| Type | Description |
 | --- | --- | --- |
-| *vbusStatus* | Integer| Possible input states &mdash; see [**V<sub>BUS</sub> Status**](#vsubbussub-status), below, for details |
-| *inputCurrentLimit* | Integer| 100-3000mA |
+| *vbus* | Integer| Possible input states &mdash; see [**V<sub>BUS</sub> Status**](#vsubbussub-status), below, for details |
+| *inCurrLimit* | Integer| 100-3000mA |
 
 #### V<sub>BUS</sub> Status ####
 
@@ -118,7 +118,7 @@ Table &mdash; An input status report with the following keys:
 ```squirrel
 local inputStatus = batteryCharger.getInputStatus();
 local msg = "";
-switch(inputStatus.vbusStatus) {
+switch(inputStatus.vbus) {
     case BQ24295_VBUS_STATUS.UNKNOWN:
         msg = "No input or DPDM detection incomplete";
         break;
@@ -134,10 +134,10 @@ switch(inputStatus.vbusStatus) {
 }
 
 server.log("Charging mode: " + msg);
-server.log("Input current limit: " + inputStatus.inputCurrentLimit);
+server.log("Input current limit: " + inputStatus.currLimit);
 ```
 
-### getChargingStatus() ###
+### getChrgStatus() ###
 
 This method reports the battery charging status.
 
@@ -155,7 +155,7 @@ Integer &mdash; A charging status constant:
 #### Example ####
 
 ```squirrel
-local status = charger.getChargingStatus();
+local status = charger.getChrgStatus();
 switch(status) {
     case BQ24295_CHARGING_STATUS.NOT_CHARGING:
         server.log("Battery is not charging");
@@ -176,7 +176,7 @@ switch(status) {
 }
 ```
 
-### getChargerFaults() ###
+### getChrgFaults() ###
 
 This method reports possible charger faults.
 
@@ -186,11 +186,11 @@ Table &mdash; A charger fault report with the following keys:
 
 | Key/Fault | Type | Description |
 | --- | --- | --- |
-| *watchdogFault* | Bool | `true` if watchdog timer has expired, otherwise `false` |
-| *boostFault* | Bool | `true` if V<sub>BUS</sub> overloaded in OTG, V<sub>BUS</sub> OVP, or battery is too low (any conditions that cannot start boost function), otherwise `false` |
-| *chrgFault* | Integer | A charging fault. See [**Charging Faults**](#charging-faults), below, for possible values |
-| *battFault* | Bool| `true` if battery OVP, otherwise `false` |
-| *ntcFault* | Integer | An NTC fault. See [**NTC Faults**](#ntc-faults), below, for possible values |
+| *watchdog* | Bool | `true` if watchdog timer has expired, otherwise `false` |
+| *boost* | Bool | `true` if V<sub>BUS</sub> overloaded in OTG, V<sub>BUS</sub> OVP, or battery is too low (any conditions that cannot start boost function), otherwise `false` |
+| *chrg* | Integer | A charging fault. See [**Charging Faults**](#charging-faults), below, for possible values |
+| *batt* | Bool| `true` if battery OVP, otherwise `false` |
+| *ntc* | Integer | An NTC fault. See [**NTC Faults**](#ntc-faults), below, for possible values |
 
 #### Charging Faults ####
 
@@ -212,14 +212,14 @@ Table &mdash; A charger fault report with the following keys:
 #### Example ####
 
 ```squirrel
-local faults = batteryCharger.getChargerFaults();
+local faults = batteryCharger.getChrgFaults();
 server.log("Fault Report:");
 server.log("-----------------------------------);
-if (faults.watchdogFault) server.log("Watchdog Timer Fault reported");
-if (faults.boostFault) server.log("Boost Fault reported");
-if (faults.battFault) server.log("VBAT too high");
+if (faults.watchdog) server.log("Watchdog Timer Fault reported");
+if (faults.boost) server.log("Boost Fault reported");
+if (faults.batt) server.log("VBAT too high");
 
-switch(faults.chrgFault) {
+switch(faults.chrg) {
     case BQ24295_CHARGING_FAULT.NORMAL:
         server.log("Charging OK");
         break;
@@ -234,7 +234,7 @@ switch(faults.chrgFault) {
         break;
 }
 
-switch(faults.ntcFault) {
+switch(faults.ntc) {
     case BQ24295_NTC_FAULT.NORMAL:
         server.log("NTC OK");
         break;

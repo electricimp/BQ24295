@@ -93,15 +93,15 @@ class BQ24295 {
         
         // Set charge voltage
         local voltage = ("voltage" in settings) ? settings.voltage : BQ24295_DEFAULT_VOLTAGE;
-        _setChargeVoltage(voltage);
+        _setChrgV(voltage);
 
         // Set charge current
         local curr = ("current" in settings) ? settings.current : BQ24295_DEFULAT_CHRG_CURR;
-        _setChargingCurrent(curr);
+        _setChrgCurr(curr);
 
         // Set charge termination current
-        local termCurr = ("setChargeTerminationCurrentLimit" in settings) ? settings.setChargeTerminationCurrentLimit : BQ24295_DEFULAT_CHRG_TERM_CURR;
-        _setChargeTerminationCurrent(termCurr);
+        local termCurr = ("chrgTermLimit" in settings) ? settings.chrgTermLimit : BQ24295_DEFULAT_CHRG_TERM_CURR;
+        _setChrgTermCurr(termCurr);
     }
 
     // Clear the enable charging bit, device will not charge until enableCharging() is called again
@@ -113,7 +113,7 @@ class BQ24295 {
     }
 
     // Returns the target battery voltage in volts. Default: 4.208V, Range: 3.504V - 4.400V.
-    function getChargeVoltage() {
+    function getChrgTermV() {
         local rv = _getReg(BQ24295_CRG_VOLT_CTRL_REG);
 
         // VREG bits 2-7, Resolution 16mV, Offset 3.504V, Range 3.504V - 4.400V
@@ -139,36 +139,36 @@ class BQ24295 {
         // enum contains human readable names for the integer.
         // inputCurrentLimit - integer, value in mA
         return {
-            "vbusStatus"        : vbus_rv & 0xC0, 
-            "inputCurrentLimit" : inCurrVals[incurr_rv & 0x07]
+            "vbus"     : vbus_rv & 0xC0, 
+            "curLimit" : inCurrVals[incurr_rv & 0x07]
         }
     }
 
     // Returns integer, value of CHRG_STAT bits (4-5). BQ24295_CHARGING_STATUS enum 
     // contains human readable names for the return integer.
-    function getChargingStatus() {
+    function getChrgStatus() {
         local rv = _getReg(BQ24295_SYS_STAT_REG);
         return rv & 0x30;
     }
 
     // Returns a table with slots watchdogFault, boostFault, chrgFault, battFault and ntcFault.
-    function getChargerFaults() {
+    function getChrgFaults() {
         local rv = _getReg(BQ24295_NEW_FAULT_REG);
 
         // Return table with: 
-        // watchdogFault - bool: f = normal, t = timer expired
-        // boostFault - bool: f = normal, t = VBUS overload in OTG, vbus OVP, batt too low/cannot start boost
-        // chrgFault - integer, value of CHRG_FAULT bits (4-5), enum BQ24295_CHARGING_FAULT contains 
+        // watchdog - bool: f = normal, t = timer expired
+        // boost - bool: f = normal, t = VBUS overload in OTG, vbus OVP, batt too low/cannot start boost
+        // chrg - integer, value of CHRG_FAULT bits (4-5), enum BQ24295_CHARGING_FAULT contains 
         // human readable names for integer
-        // battFault - bool, f = normal, t = battery OVP
-        // ntcFault - integer, value of NTC_FAULT bits (0-1), enum BQ24295_NTC_FAULT contains human
+        // batt - bool, f = normal, t = battery OVP
+        // ntc - integer, value of NTC_FAULT bits (0-1), enum BQ24295_NTC_FAULT contains human
         // readable names for integer
         return {
-            "watchdogFault" : (rv & 0x80) == 0x80,
-            "boostFault"    : (rv & 0x40) == 0x40,
-            "chrgFault"     : rv & 0x30, 
-            "battFault"     : (rv & 0x08) == 0x08, 
-            "ntcFault"      : rv & 0x02
+            "watchdog" : (rv & 0x80) == 0x80,
+            "boost"    : (rv & 0x40) == 0x40,
+            "chrg"     : rv & 0x30, 
+            "batt"     : (rv & 0x08) == 0x08, 
+            "ntc"      : rv & 0x02
         }
     }
 
@@ -184,7 +184,7 @@ class BQ24295 {
     //-------------------- PRIVATE METHODS --------------------//
 
     // Sets charge voltage, param should be in Volts. Default: 4.208V, Range: 3.504V - 4.400V
-    function _setChargeVoltage(vreg) {
+    function _setChrgV(vreg) {
         // Convert to V to mV, ensure value is within range 3504mV and 4400mV
         // and calculate value with offset: 3.504V and resolution: 16mV 
         vreg = (_limit(vreg * 1000, 3504, 4400) - 3504) / 16;
@@ -193,13 +193,14 @@ class BQ24295 {
         local rv = _getReg(BQ24295_CRG_VOLT_CTRL_REG);
         // Clear Charge Voltage Limit (VREG) bits (2-7)
         rv = rv & 0x03;
-        // Update register value with new VREG value;
+
+        // Update register value with new VREG value
         rv = rv | ((vreg.tointeger() << 2) & 0xFC);
         _setReg(BQ24295_CRG_VOLT_CTRL_REG, rv);
     }
 
     // Sets charge current limit, param should be in mA. Default: 1024mA, Range: 512mA - 3008mA
-    function _setChargingCurrent(curr) {
+    function _setChrgCurr(curr) {
         // Ensure value is within range 512mA and 3008mA and calculate
         // value with offset: 512mA and resolution: 64mA         
         curr = (_limit(curr, 512, 3008) - 512) / 64;
@@ -209,13 +210,13 @@ class BQ24295 {
         // Clear Charge Current Limit (ICHG) bits (2-7)
         rv = rv & 0x03;
 
-        // Update register value with new current (ICHG) value;
+        // Update register value with new current (ICHG) value
         rv = rv | ((curr.tointeger() << 2) & 0xFC);
         _setReg(BQ24295_CRG_CURR_CTRL_REG, rv);
     }
 
     // Sets charge termination current limit, param should be in mA. Default: 256mA, Range: 128mA - 2048mA
-    function _setChargeTerminationCurrent(iterm) {
+    function _setChrgTermCurr(iterm) {
         // Ensure value is within range 128mA and 2048mA and calculate
         // value with offset: 128mA and resolution: 128mA         
         iterm = (_limit(iterm, 128, 2048) - 128) / 128;
@@ -225,7 +226,7 @@ class BQ24295 {
         // Clear Termination Current Limit (ITERM) bits (0-3)
         rv = rv & 0xF0;
 
-        // Update register value with new termination current (ITERM) value;
+        // Update register value with new termination current (ITERM) value
         rv = rv | (iterm.tointeger() & 0x0F);
         _setReg(BQ24295_PCRG_TERM_CURR_CTRL_REG, rv);
     }
@@ -247,29 +248,21 @@ class BQ24295 {
     // Helper to get a register value
     function _getReg(reg) {
         local result = _i2c.read(_addr, reg.tochar(), 1);
-        if (result == null) {
-            throw "I2C read error: " + _i2c.readerror();
-        }
+        if (result == null)  throw "I2C read error: " + _i2c.readerror();
         return result[0];
     }
 
     // Helper to set a register value
     function _setReg(reg, val) {
-        local result = _i2c.write(_addr, format("%c%c", reg, (val & 0xff)));
-        if (result) {
-            throw "I2C write error: " + result;
-        }
+        local result = _i2c.write(_addr, format("%c%c", reg, (val & 0xFF)));
+        if (result) throw "I2C write error: " + result;
         return result;
     }
 
     // Helper to set a single bit in a register
     function _setRegBit(reg, bit, state) {
         local val = _getReg(reg);
-        if (state == 0) {
-            val = val & ~(0x01 << bit);
-        } else {
-            val = val | (0x01 << bit);
-        }
+        val = (state == 0) ? val & ~(0x01 << bit) : val | (0x01 << bit);
         return _setReg(reg, val);
     }
 

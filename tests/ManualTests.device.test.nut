@@ -69,12 +69,12 @@ class ManualWatchdogTest extends ImpTestCase {
         // Maker sure the charger's has default settings
         _charger.reset();
         // Store default charge voltage (before enable)
-        local defaultVoltage = _charger.getChargeVoltage();
+        local defaultVoltage = _charger.getChrgTermV();
         // Enable with non-default settings
         _charger.enable({"voltage" : 3.0});
 
         // Check settings have changed after enable
-        local userSetVoltage = _charger.getChargeVoltage();
+        local userSetVoltage = _charger.getChrgTermV();
         assertTrue(defaultVoltage != userSetVoltage, "User set charge voltage should not match default voltage");
         
         // Wait to ensure watchdog timer has time to expire 
@@ -86,7 +86,7 @@ class ManualWatchdogTest extends ImpTestCase {
             imp.wakeup(WATCHDOG_TEST_EXP_TIME_SEC, function() {
                 cancelHearbeat();
                 logPercentWdTestDone();
-                local afterTimerVoltage = _charger.getChargeVoltage();
+                local afterTimerVoltage = _charger.getChrgTermV();
                 assertTrue(defaultVoltage != afterTimerVoltage, "User set charge voltage should not match default voltage");
                 assertEqual(userSetVoltage, afterTimerVoltage, "User set charge voltage should be the same after " + WATCHDOG_TEST_EXP_TIME_SEC + "s");
                 return resolve("Watchdog test passed");
