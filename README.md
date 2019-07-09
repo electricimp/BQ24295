@@ -15,7 +15,7 @@ The constructor does not configure the battery charger. It is therefore strongly
 | Parameter | Type | Required? | Description |
 | --- | --- | --- | --- |
 | *i2cBus* | imp i2c bus object | Yes | The imp I&sup2;C bus that the BQ24295 is connected to. The I&sup2;C bus **must** be pre-configured &mdash; the library will not configure the bus |
-| *i2cAddress* | Integer | No | The BQ24295's I&sup2;C address. Default: 0xD4 |
+| *i2cAddress* | Integer | No | The BQ24295's I&sup2;C address. Default: 0xD6 |
 
 #### Example ####
 

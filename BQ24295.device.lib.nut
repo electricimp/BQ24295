@@ -77,7 +77,7 @@ class BQ24295 {
     _i2c = null;
     _addr = null;
 
-    constructor(i2c, addr = 0xD4) {
+    constructor(i2c, addr = 0xD6) {
         _i2c = i2c;
         _addr = addr;
     }
