@@ -104,7 +104,7 @@ Table &mdash; An input status report with the following keys:
 | Key| Type | Description |
 | --- | --- | --- |
 | *vbus* | Integer| Possible input states &mdash; see [**V<sub>BUS</sub> Status**](#vsubbussub-status), below, for details |
-| *inCurrLimit* | Integer| 100-3000mA |
+| *currLimit* | Integer| 100-3000mA |
 
 #### V<sub>BUS</sub> Status ####
 

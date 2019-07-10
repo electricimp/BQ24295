@@ -24,7 +24,7 @@
 
 @include __PATH__+ "/StubbedI2C.device.nut"
 
-const BQ24295_DEFAULT_I2C_ADDR = 0xD4;
+const BQ24295_DEFAULT_I2C_ADDR = 0xD6;
 
 class StubbedHardwareTests extends ImpTestCase {
     
@@ -323,9 +323,9 @@ class StubbedHardwareTests extends ImpTestCase {
         local expectedVBus   = BQ24295_VBUS_STATUS.OTG;
         local expectedInCurr = 900;
         local actual = _charger.getInputStatus();
-        assertTrue(("vbus" in actual && "curLimit" in actual) "Get input status did return expected table slots");
+        assertTrue(("vbus" in actual && "currLimit" in actual) "Get input status did return expected table slots");
         assertEqual(expectedVBus, actual.vbus, "Get input status VBUS status did not match expected results");
-        assertEqual(expectedInCurr, actual.curLimit, "Get input status input current limit did not match expected results");
+        assertEqual(expectedInCurr, actual.currLimit, "Get input status input current limit did not match expected results");
 
         _cleari2cBuffers();
         return "Get input status test passed";

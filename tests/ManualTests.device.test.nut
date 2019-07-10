@@ -22,6 +22,156 @@
 // ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 // OTHER DEALINGS IN THE SOFTWARE.
 
+// Stubbed i2c for imp006
+class softi2c {
+    scl = null;
+    // Pins
+    sda = null;
+    delay = (1.0/400000);
+    
+    constructor(_scl, _sda) {
+        scl = _scl;
+        sda = _sda;
+        
+        scl.configure(DIGITAL_OUT_OD);
+        sda.configure(DIGITAL_OUT_OD);
+        
+        // unjam
+        _write(0xff);
+        _stop();
+    }
+    
+    function _start() {
+        // SDA low then SCL
+        imp.sleep(delay);
+        sda.write(0);
+        imp.sleep(delay);
+        scl.write(0);
+    }
+    
+    function _stop() {
+        // SCL high then SDA
+        imp.sleep(delay);
+        scl.write(1);
+        imp.sleep(delay);
+        sda.write(1);
+    }
+    
+    function _write(byte) {
+        for(local a = 7; a >= 0; a--) {
+            // Set data
+            if (byte & (1<<a)) sda.write(1);
+            else sda.write(0);
+            
+            // Clock high then low
+            imp.sleep(delay);
+            scl.write(1);
+            imp.sleep(delay);
+            scl.write(0);
+        }
+        
+        // Read ACK
+        sda.write(1);
+        imp.sleep(delay);
+        scl.write(1);
+        imp.sleep(delay);
+        local ack = sda.read()?false:true;
+        scl.write(0);
+        return ack;
+    }
+    
+    function _read(ack) {
+        local byte = 0;
+        sda.write(1);
+        for(local a = 7; a >=0; a--) {
+            // Read just on rising edge of clock
+            imp.sleep(delay);
+            scl.write(1);
+            byte += sda.read() ? (1<<a) : 0;
+            imp.sleep(delay);
+            scl.write(0);
+        }
+        
+        // Send ACK
+        sda.write(ack?0:1);
+        imp.sleep(delay);
+        scl.write(1);
+        imp.sleep(delay);
+        scl.write(0);
+        sda.write(1);
+
+        return byte;
+    }
+    
+    function write(address, data) {
+        //server.log(format("Writing addr %02x (len %d)", address, data.len()));
+        
+        _start();
+        local error = 0;
+        if (_write(address)) {
+            // Send data
+            foreach(b in data) {
+                if (!_write(b)) {
+                    server.log("NACK writing data");
+                    error = -2;
+                    break;
+                }
+            }
+        } else {
+            server.log("NACK address");
+            error = -1;
+        }
+        _stop();
+        
+        return error;
+    }
+
+    function read(address, data, len) {
+        local s="";
+    
+        //server.log(format("Reading addr %02x (len %d)", address, len));
+        
+        _start();
+        if (_write(address&0xfe)) {
+            // Send data
+            foreach(b in data) {
+                //server.log(format("writing %02x", b));
+                if (!_write(b)) {
+                    server.log("NACK writing data");
+                    break;
+                }
+            }
+        } else {
+            server.log("NACK address (on write)");
+        }
+        _stop();
+        
+        _start();
+
+        if (_write(address|1)) {
+            // Read data
+            for(local a=0;a<len;a++) {
+                local b = _read(a!=(len-1));
+                //server.log(format("read %02x", b));
+                s+=b.tochar();
+            }
+        } else {
+            server.log("NACK address (on read)");
+        }
+        _stop();
+        
+        return (s.len() > 0) ? s : null;
+    }
+    
+    function configure(speed) {
+        delay = (1.0/speed);
+    }
+
+    function readerror() {
+        return -50;
+    }
+}
+
 const BQ24295_DEFAULT_I2C_ADDR = 0xD4;
 // From data sheet watchdog timer: default is 40s, max is 160s
 const WATCHDOG_TEST_EXP_TIME_SEC = 165;
@@ -37,10 +187,14 @@ class ManualWatchdogTest extends ImpTestCase {
     _wdTimeoutStartTime = null;
 
     function setUp() {
-        // imp001 tied into imp006 breakout board (custom hardware) 
-        _i2c = hardware.i2c89;
+        // imp006 breakout board, using bit bang i2c class
+        // No battery connected - values in test may change if battery is attached
+        // or imp is powered in a different way
+        _i2c = softi2c(hardware.pinL, hardware.pinM);
         _i2c.configure(CLOCK_SPEED_400_KHZ);
         _charger = BQ24295(_i2c);
+
+        _charger.reset();
         return "Watchdog test setup complete.";
     }
 
@@ -64,6 +218,9 @@ class ManualWatchdogTest extends ImpTestCase {
             _hb = null;
         }
     }
+
+    // Tests
+    // ----------------------------------------------------------
 
     function testWatchdog() {
         // Maker sure the charger's has default settings
@@ -93,6 +250,58 @@ class ManualWatchdogTest extends ImpTestCase {
             }.bindenv(this))
         }.bindenv(this))
     }
+
+    function testEnable() {
+        local voltage = 3.504;
+        _charger.enable({"voltage" : voltage});
+        local actual = _charger.getChrgTermV();
+
+        assertEqual(voltage, actual, "Expected charge termination value of " + voltage + ", actual value: " + actual);
+
+        return "Enable test passed.";
+    }
+
+    function testInputStatus() {
+        local expCurr = 1000;
+        local expVBUS = BQ24295_VBUS_STATUS.ADAPTER_PORT // UNKNOWN, USB_HOST, ADAPTER_PORT, OTG
+
+        local actual = _charger.getInputStatus();
+
+        assertEqual(expVBUS, actual.vbus, "Expected VBUS input status " + expVBUS + ", actual value: " + actual.vbus);
+        assertEqual(expCurr, actual.currLimit, "Expected input current limit " + expCurr + ", actual value: " + actual.currLimit);
+
+        return "Input status test passed.";
+    }
+
+    function testChargeFaults() {
+        local expWatchdog = false;
+        local expboost = false
+        local charge = BQ24295_CHARGING_FAULT.NORMAL;   // NORMAL, INPUT_FAULT, THERMAL_SHUTDOWN, CHARGE_TIMER_EXPIRATION
+        local battery = false;
+        local ntc = BQ24295_NTC_FAULT.TS_COLD;           // NORMAL, TS_HOT, TS_COLD
+
+        local actual = _charger.getChrgFaults();
+
+        assertEqual(expWatchdog, actual.watchdog, "Expected watchdog fault " + expWatchdog + ", actual value: " + actual.watchdog);
+        assertEqual(expboost, actual.boost, "Expected boost fault " + expboost + ", actual value: " + actual.boost);
+        assertEqual(charge, actual.chrg, "Expected charge fault " + charge + ", actual value: " + actual.chrg);
+        assertEqual(battery, actual.batt, "Expected battery fault " + battery + ", actual value: " + actual.batt);
+        assertEqual(ntc, actual.ntc, "Expected ntc fault " + ntc + ", actual value: " + actual.ntc);
+
+        return "Charge fault test passed.";
+    }
+
+    function testChargingStatus() {
+        local expected = BQ24295_CHARGING_STATUS.NOT_CHARGING // NOT_CHARGING, PRE_CHARGE, FAST_CHARGING, CHARGE_TERMINATION_DONE
+
+        local actual = _charger.getChrgStatus();
+
+        assertEqual(expected, actual, "Expected VBUS input status " + expected + ", actual value: " + actual);
+
+        return "Charging status test passed.";
+    }
+
+    // ----------------------------------------------------------
 
     function tearDown() {
         return "Watchdog tests finished.";

@@ -35,7 +35,7 @@ const BQ24295_SYS_STAT_REG              = 0x08;
 const BQ24295_NEW_FAULT_REG             = 0x09;
 const BQ24295_VEN_PT_REV_STAT_REG       = 0x0A;
 
-// Enum helper for getChargeStatus() output
+// Enum helper for getChrgStatus() output
 enum BQ24295_CHARGING_STATUS {
     NOT_CHARGING            = 0x00, // reg bits 4-5 = 00
     PRE_CHARGE              = 0x10, // reg bits 4-5 = 01
@@ -51,7 +51,7 @@ enum BQ24295_VBUS_STATUS {
     OTG          = 0xC0  // reg bits 7-8 = 11
 }
 
-// Enum helper for chrgFault in getChargingFaults() output table
+// Enum helper for chrgFault in getChrgFaults() output table
 enum BQ24295_CHARGING_FAULT {
     NORMAL                  = 0x00, // reg bits 4-5 = 00
     INPUT_FAULT             = 0x10, // reg bits 4-5 = 01 (OVP or bad source)
@@ -59,7 +59,7 @@ enum BQ24295_CHARGING_FAULT {
     CHARGE_TIMER_EXPIRATION = 0x30  // reg bits 4-5 = 11
 }
 
-// Enum helper for ntcFault in getChargingFaults() output table
+// Enum helper for ntcFault in getChrgFaults() output table
 enum BQ24295_NTC_FAULT {
     NORMAL,  // 00
     TS_HOT,  // 01
@@ -140,7 +140,7 @@ class BQ24295 {
         // inputCurrentLimit - integer, value in mA
         return {
             "vbus"     : vbus_rv & 0xC0, 
-            "curLimit" : inCurrVals[incurr_rv & 0x07]
+            "currLimit" : inCurrVals[incurr_rv & 0x07]
         }
     }
 
