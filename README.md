@@ -157,7 +157,7 @@ Integer &mdash; A charging status constant:
 #### Example ####
 
 ```squirrel
-local status = charger.getChrgStatus();
+local status = batteryCharger.getChrgStatus();
 switch(status) {
     case BQ24295_CHARGING_STATUS.NOT_CHARGING:
         server.log("Battery is not charging");
@@ -216,7 +216,7 @@ Table &mdash; A charger fault report with the following keys:
 ```squirrel
 local faults = batteryCharger.getChrgFaults();
 server.log("Fault Report:");
-server.log("-----------------------------------);
+server.log("-----------------------------------");
 if (faults.watchdog) server.log("Watchdog Timer Fault reported");
 if (faults.boost) server.log("Boost Fault reported");
 if (faults.batt) server.log("VBAT too high");
@@ -247,7 +247,7 @@ switch(faults.ntc) {
         server.log("NTC NOT OK - TS Hot");
         break;
 }
-server.log("-----------------------------------);
+server.log("-----------------------------------");
 ```
 
 ### reset() ###
