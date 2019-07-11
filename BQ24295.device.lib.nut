@@ -69,6 +69,7 @@ enum BQ24295_NTC_FAULT {
 const BQ24295_DEFAULT_VOLTAGE        = 4.208;
 const BQ24295_DEFULAT_CHRG_CURR      = 1024;
 const BQ24295_DEFULAT_CHRG_TERM_CURR = 256;
+const BQ24295_DEFAULT_I2C_ADDR       = 0xD6;
 
 class BQ24295 {
 
@@ -77,7 +78,7 @@ class BQ24295 {
     _i2c = null;
     _addr = null;
 
-    constructor(i2c, addr = 0xD6) {
+    constructor(i2c, addr = BQ24295_DEFAULT_I2C_ADDR) {
         _i2c = i2c;
         _addr = addr;
     }

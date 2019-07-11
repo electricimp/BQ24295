@@ -22,163 +22,17 @@
 // ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 // OTHER DEALINGS IN THE SOFTWARE.
 
-// Stubbed i2c for imp006
-class softi2c {
-    scl = null;
-    // Pins
-    sda = null;
-    delay = (1.0/400000);
-    
-    constructor(_scl, _sda) {
-        scl = _scl;
-        sda = _sda;
-        
-        scl.configure(DIGITAL_OUT_OD);
-        sda.configure(DIGITAL_OUT_OD);
-        
-        // unjam
-        _write(0xff);
-        _stop();
-    }
-    
-    function _start() {
-        // SDA low then SCL
-        imp.sleep(delay);
-        sda.write(0);
-        imp.sleep(delay);
-        scl.write(0);
-    }
-    
-    function _stop() {
-        // SCL high then SDA
-        imp.sleep(delay);
-        scl.write(1);
-        imp.sleep(delay);
-        sda.write(1);
-    }
-    
-    function _write(byte) {
-        for(local a = 7; a >= 0; a--) {
-            // Set data
-            if (byte & (1<<a)) sda.write(1);
-            else sda.write(0);
-            
-            // Clock high then low
-            imp.sleep(delay);
-            scl.write(1);
-            imp.sleep(delay);
-            scl.write(0);
-        }
-        
-        // Read ACK
-        sda.write(1);
-        imp.sleep(delay);
-        scl.write(1);
-        imp.sleep(delay);
-        local ack = sda.read()?false:true;
-        scl.write(0);
-        return ack;
-    }
-    
-    function _read(ack) {
-        local byte = 0;
-        sda.write(1);
-        for(local a = 7; a >=0; a--) {
-            // Read just on rising edge of clock
-            imp.sleep(delay);
-            scl.write(1);
-            byte += sda.read() ? (1<<a) : 0;
-            imp.sleep(delay);
-            scl.write(0);
-        }
-        
-        // Send ACK
-        sda.write(ack?0:1);
-        imp.sleep(delay);
-        scl.write(1);
-        imp.sleep(delay);
-        scl.write(0);
-        sda.write(1);
+// When these test were written impOS i2c support was not available for the 
+// imp006, so SofwareI2C class was used to bit bang i2c.
+@include __PATH__+ "/SoftwareI2C.device.nut"
 
-        return byte;
-    }
-    
-    function write(address, data) {
-        //server.log(format("Writing addr %02x (len %d)", address, data.len()));
-        
-        _start();
-        local error = 0;
-        if (_write(address)) {
-            // Send data
-            foreach(b in data) {
-                if (!_write(b)) {
-                    server.log("NACK writing data");
-                    error = -2;
-                    break;
-                }
-            }
-        } else {
-            server.log("NACK address");
-            error = -1;
-        }
-        _stop();
-        
-        return error;
-    }
-
-    function read(address, data, len) {
-        local s="";
-    
-        //server.log(format("Reading addr %02x (len %d)", address, len));
-        
-        _start();
-        if (_write(address&0xfe)) {
-            // Send data
-            foreach(b in data) {
-                //server.log(format("writing %02x", b));
-                if (!_write(b)) {
-                    server.log("NACK writing data");
-                    break;
-                }
-            }
-        } else {
-            server.log("NACK address (on write)");
-        }
-        _stop();
-        
-        _start();
-
-        if (_write(address|1)) {
-            // Read data
-            for(local a=0;a<len;a++) {
-                local b = _read(a!=(len-1));
-                //server.log(format("read %02x", b));
-                s+=b.tochar();
-            }
-        } else {
-            server.log("NACK address (on read)");
-        }
-        _stop();
-        
-        return (s.len() > 0) ? s : null;
-    }
-    
-    function configure(speed) {
-        delay = (1.0/speed);
-    }
-
-    function readerror() {
-        return -50;
-    }
-}
-
-const BQ24295_DEFAULT_I2C_ADDR = 0xD4;
 // From data sheet watchdog timer: default is 40s, max is 160s
 const WATCHDOG_TEST_EXP_TIME_SEC = 165;
 
 // NOTE: This test takes ~3m to run.
-// This test requires hardware. Test currently configured for a custom board -
-// imp001 wired to imp006 rev1.0 breakout board with battery charger chip on i2c89.
+// This test requires hardware. Test currently configured for a imp006 breakout board
+// rev1.0 with BQ24295 battery charger on i2cLM with no battery connected. Status test
+// expected results may fail if battery is connected. 
 class ManualWatchdogTest extends ImpTestCase {
     
     _i2c     = null;
@@ -195,6 +49,7 @@ class ManualWatchdogTest extends ImpTestCase {
         _charger = BQ24295(_i2c);
 
         _charger.reset();
+        _charger.enable();
         return "Watchdog test setup complete.";
     }
 
