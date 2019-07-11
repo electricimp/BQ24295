@@ -103,7 +103,7 @@ Table &mdash; An input status report with the following keys:
 
 | Key| Type | Description |
 | --- | --- | --- |
-| *vbus* | Integer| Possible input states &mdash; see [**V<sub>BUS</sub> Status**](#vsubbussub-status), below, for details |
+| *vbus* | Integer| Possible input states &mdash; see [**V<sub>BUS</sub> Status**](#vbus-status), below, for details |
 | *currLimit* | Integer| 100-3000mA |
 
 #### V<sub>BUS</sub> Status ####
@@ -254,7 +254,7 @@ server.log("-----------------------------------");
 
 This method provides a software reset which clears all of the BQ24295's register settings.
 
-**Note** This will reset the charge voltage and current to the register defaults: 4.208V and 1024mA. Please ensure that you confirm these are suitable for your battery &mdash; see [**Setting Up The BQ24295 Library For Your Battery**](./cxamples/README.md) for guidance. If the defaults are not appropriate for your battery, make sure you call [*enable()*](#enablesettings) with the correct settings **immediately** after calling *reset()*.
+**Note** This will reset the charge voltage and current to the register defaults: 4.208V and 1024mA. Please ensure that you confirm these are suitable for your battery &mdash; see [**Setting Up The BQ24295 Library For Your Battery**](./examples/README.md) for guidance. If the defaults are not appropriate for your battery, make sure you call [*enable()*](#enablesettings) with the correct settings **immediately** after calling *reset()*.
 
 #### Return Value ####
 
