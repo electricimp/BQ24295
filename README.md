@@ -42,7 +42,7 @@ This method configures and enables the battery charger with settings to perform 
 | --- | --- | --- | --- |
 | *settings* | Table | No | A table of settings &mdash; see [**Settings Options**](#settings-options), below |
 
-##### Settings Options #####
+#### Settings Options ####
 
 | Key | Type | Description |
 | --- | --- | --- |
