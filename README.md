@@ -46,9 +46,9 @@ This method configures and enables the battery charger with settings to perform 
 
 | Key | Type | Description |
 | --- | --- | --- |
-| *voltage* | Float | The desired charge termination voltage in Volts. Range: 3.504V - 4.400V. Default: 4.208V. |
-| *current* | Integer | The desired fast-charge current limit in mA. Range: 512mA - 3008mA. Default: 1024mA. |
-| *chrgTermLimit* | Integer | The current at which the charge cycle will be terminated when the battery voltage is above the recharge threshold. Range: 128mA - 2048mA. Default: 256mA |
+| *voltage* | Float | The desired charge termination voltage in Volts. Range: 3.504-4.400V. Default: 4.208V |
+| *current* | Integer | The desired fast-charge current limit in mA. Range: 512-3008mA. Default: 1024mA |
+| *chrgTermLimit* | Integer | The current at which the charge cycle will be terminated when the battery voltage is above the recharge threshold. Range: 128-2048mA. Default: 256mA |
 
 #### Return Value ####
 
